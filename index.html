@@ -133,6 +133,28 @@ label{color:var(--mut);font-size:.85rem}
   <div id="ll" class="d-grid gap-2"></div>
   <div class="small text-secondary mt-2 ao">Solo entran al sorteo los dúos marcados como pagados.</div>
 </section>
+
+<!-- CONFIGURACIÓN (solo admin) -->
+<section class="panel p-3 p-md-4 mb-5 ao" id="secCfg">
+  <h2 class="h4 mb-3">Configuración del torneo</h2>
+  <div class="row g-2">
+    <div class="col-12"><label for="c_torneo">Nombre del torneo</label><input id="c_torneo" class="form-control" maxlength="40"></div>
+    <div class="col-md-6"><label for="c_inicio">Inicio del torneo</label><input id="c_inicio" type="datetime-local" class="form-control"></div>
+    <div class="col-md-6"><label for="c_limite">Cierre de inscripciones</label><input id="c_limite" type="datetime-local" class="form-control"></div>
+    <div class="col-6 col-md-3"><label for="c_max">Cupos (dúos)</label><input id="c_max" type="number" min="1" class="form-control"></div>
+    <div class="col-6 col-md-3"><label for="c_cuota">Cuota ($)</label><input id="c_cuota" type="number" min="0" step="0.5" class="form-control"></div>
+    <div class="col-md-6"><label for="c_waOrg">WhatsApp organizador (10 números)</label><input id="c_waOrg" inputmode="numeric" maxlength="10" class="form-control"></div>
+    <div class="col-12"><label for="c_waGrupo">Link del grupo de WhatsApp (opcional, tiene prioridad)</label><input id="c_waGrupo" class="form-control" placeholder="https://chat.whatsapp.com/..."></div>
+    <div class="col-12"><label for="c_waMsg">Mensaje inicial del botón de WhatsApp</label><input id="c_waMsg" class="form-control"></div>
+    <div class="col-md-5"><label for="c_premios">Premios (uno por línea)</label><textarea id="c_premios" class="form-control" rows="5"></textarea></div>
+    <div class="col-md-7"><label for="c_reglas">Reglas (una por línea)</label><textarea id="c_reglas" class="form-control" rows="5"></textarea></div>
+  </div>
+  <div id="cfgMsg" class="small mt-2" role="status"></div>
+  <div class="d-flex gap-2 mt-3">
+    <button id="btnCfg" class="btn btn-acc">Guardar configuración</button>
+    <button id="btnCfgReset" class="btn btn-outline-secondary">Restablecer valores</button>
+  </div>
+</section>
 </div>
 
 <a id="waFloat" class="wa-float" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp" href="#">
@@ -172,16 +194,17 @@ label{color:var(--mut);font-size:.85rem}
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.js"></script>
 <script>
 /* ===================== CONFIGURACIÓN ===================== */
-const TORNEO = "Torneo de Dúos";
-const MAX_DUOS = 32;                    // cupos
-const FECHA_LIMITE = "2026-12-31T23:59";// cierre de inscripciones
-const CUOTA = 5;                        // monto por defecto al marcar pagado ($)
-const PAIS = "593";                     // prefijo para WhatsApp (Ecuador)
-const WA_ORGANIZADOR = "0991234567";  // tu WhatsApp (10 números)
-const WA_GRUPO = "";                 // link del grupo (https://chat.whatsapp.com/...). Si lo llenas, tiene prioridad
-const WA_MENSAJE = "Hola, tengo una consulta sobre el torneo de dúos.";
-const INFO = {
-  fecha: "Sábado 2 de enero · 8:00 pm · Modo dúos",
+const PAIS = "593";  // prefijo de país para WhatsApp (Ecuador)
+// Valores por defecto. Desde el panel admin ("Configuración del torneo") se pueden cambiar sin tocar el código.
+const DEF = {
+  torneo: "Torneo de Dúos",
+  inicio: "2027-01-02T20:00",   // inicio del torneo
+  limite: "2026-12-31T23:59",   // cierre de inscripciones
+  max: 32,                      // cupos (dúos)
+  cuota: 5,                     // monto por defecto al marcar pagado ($)
+  waOrg: "0991234567",          // WhatsApp del organizador (10 números)
+  waGrupo: "",                  // link del grupo (si lo llenas, tiene prioridad)
+  waMsg: "Hola, tengo una consulta sobre el torneo de dúos.",
   premios: ["1er lugar: $50", "2do lugar: $20", "3er lugar: reconocimiento"],
   reglas: ["Dúos de exactamente 2 jugadores.", "El pago se confirma antes del torneo.", "Ambos jugadores deben estar conectados a la hora indicada.", "Prohibido usar hacks o cuentas ajenas.", "La decisión del organizador es final."]
 };
@@ -189,7 +212,16 @@ const ADMIN_PASSWORD = "cambia-esta-clave"; // solo se usa SIN Firebase
 
 // Config de Firebase (Realtime Database + Authentication correo/contraseña).
 // Vacío = modo local (localStorage, solo para pruebas en un navegador).
-const firebaseConfig = { apiKey:"", authDomain:"", databaseURL:"", projectId:"", appId:"" };
+const firebaseConfig = {
+  apiKey: "AIzaSyBBvgA2actVXE0iv0czkL9qjsOHKTLs8Ao",
+  authDomain: "registro-duos.firebaseapp.com",
+  databaseURL: "https://registro-duos-default-rtdb.firebaseio.com",
+  projectId: "registro-duos",
+  storageBucket: "registro-duos.firebasestorage.app",
+  messagingSenderId: "271073889744",
+  appId: "1:271073889744:web:728a4791efadf5733f3dd5",
+  measurementId: "G-9FPKE8VNLV"
+};
 
 /* REGLAS de Realtime Database (pégalas en Firebase > Realtime Database > Reglas):
 {
@@ -198,7 +230,8 @@ const firebaseConfig = { apiKey:"", authDomain:"", databaseURL:"", projectId:"",
   "ids":{"$k":{".read":true,".write":"auth!=null || !data.exists()"}},
   "duos":{".read":"auth!=null","$id":{".write":"auth!=null || (!data.exists() && newData.child('pagado').val()===false)"}},
   "lista":{".read":true,"$id":{".write":"auth!=null || (!data.exists() && newData.child('pagado').val()===false)"}},
-  "llaves":{".read":true,".write":"auth!=null"}
+  "llaves":{".read":true,".write":"auth!=null"},
+  "config":{".read":true,".write":"auth!=null"}
  }
 }
 Crea tu usuario admin en Firebase > Authentication > Users (correo + contraseña). */
@@ -209,9 +242,8 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const key = s => String(s).trim().toLowerCase().replace(/[.#$\[\]\/\s]/g, "_");
 const mask = s => { s = String(s ?? ""); return s.length <= 4 ? "••••" : "•".repeat(s.length - 4) + s.slice(-4); };
 const useFB = !!firebaseConfig.databaseURL;
-let S = {duos:{}, lista:{}, llaves:null, ids:{}}, isAdmin = false, db, auth, expired = false, closed = false, editId = null;
+let S = {duos:{}, lista:{}, llaves:null, ids:{}, config:{}}, C = {...DEF}, cfgDirty = false, isAdmin = false, db, auth, expired = false, closed = false, editId = null;
 
-$("tNombre").textContent = TORNEO.toUpperCase();
 
 /* ---------- Datos ---------- */
 function applyLocal(p){
@@ -230,6 +262,7 @@ if (useFB) {
   db = firebase.database(); auth = firebase.auth();
   db.ref("lista").on("value", s => { S.lista = s.val() || {}; render(); });
   db.ref("llaves").on("value", s => { S.llaves = s.val(); render(); });
+  db.ref("config").on("value", s => { S.config = s.val() || {}; render(); });
   auth.onAuthStateChanged(u => {
     isAdmin = !!u;
     if (u) db.ref("duos").on("value", s => { S.duos = s.val() || {}; render(); }, () => {});
@@ -239,26 +272,35 @@ if (useFB) {
 } else {
   try { S = Object.assign(S, JSON.parse(localStorage.getItem("torneo") || "{}")); } catch {}
   isAdmin = sessionStorage.getItem("admin") === "1";
-  render();
 }
 
 /* ---------- Helpers ---------- */
 const rows = () => Object.entries(S.lista).sort((a,b) => (a[1].ts||0) - (b[1].ts||0))
   .map(([id,l],i) => ({id, n:i+1, ...l, ...(isAdmin ? S.duos[id] : {})}));
+const lineas = x => Array.isArray(x) ? x : String(x ?? "").split("\n").map(t => t.trim()).filter(Boolean);
 const waLink = w => { let d = String(w||"").replace(/\D/g,""); if (d.startsWith("0")) d = PAIS + d.slice(1); return "https://wa.me/" + d; };
 const flash = (t, ok) => { $("msg").innerHTML = `<span class="${ok?"text-success":"text-danger"}">${t}</span>`; setTimeout(() => $("msg").innerHTML = "", 5000); };
 
 /* ---------- Render ---------- */
 function render(){
   document.body.classList.toggle("adm", isAdmin);
+  C = {...DEF, ...(S.config || {})}; C.premios = lineas(C.premios); C.reglas = lineas(C.reglas);
+  $("tNombre").textContent = String(C.torneo).toUpperCase(); document.title = C.torneo;
+  const ini = C.inicio ? new Date(C.inicio) : null;
+  $("iFecha").textContent = ini && !isNaN(ini) ? "Inicio: " + ini.toLocaleString("es-EC", {dateStyle:"full", timeStyle:"short"}) : "Fecha de inicio por definir";
+  $("iPremios").innerHTML = C.premios.map(x => `<li>${esc(x)}</li>`).join("");
+  $("iReglas").innerHTML = C.reglas.map(x => `<li>${esc(x)}</li>`).join("");
+  const wl = C.waGrupo || (C.waOrg ? waLink(C.waOrg) + "?text=" + encodeURIComponent(C.waMsg || "") : "");
+  waF.style.display = wl ? "flex" : "none"; if (wl) waF.href = wl;
+  if (isAdmin) fillCfg();
   const all = rows(), q = $("buscar").value.toLowerCase().trim();
   const list = all.filter(r => (!$("soloPend").checked || !r.pagado) && (!q || [r.eq,r.n1,r.n2,r.i1,r.i2,r.nota].join(" ").toLowerCase().includes(q)));
   const paid = all.filter(r => r.pagado);
   $("sT").textContent = all.length; $("sP").textContent = paid.length; $("sN").textContent = all.length - paid.length;
   $("sM").textContent = "$" + paid.reduce((a,r) => a + (Number(r.monto)||0), 0);
   $("vacio").classList.toggle("d-none", all.length > 0);
-  $("cupTxt").textContent = `${all.length} / ${MAX_DUOS}`;
-  $("cupBar").style.width = Math.min(100, all.length / MAX_DUOS * 100) + "%";
+  $("cupTxt").textContent = `${all.length} / ${C.max}`;
+  $("cupBar").style.width = Math.min(100, all.length / C.max * 100) + "%";
   lock();
 
   $("tb").innerHTML = list.map(r => `<tr>
@@ -285,15 +327,19 @@ function render(){
 }
 
 function lock(){
-  closed = expired || Object.keys(S.lista).length >= MAX_DUOS;
+  closed = expired || Object.keys(S.lista).length >= C.max;
   $("fs").disabled = closed;
   $("cerrado").classList.toggle("d-none", !closed);
 }
 function tick(){
-  const ms = new Date(FECHA_LIMITE) - Date.now(); expired = ms <= 0;
-  if (expired) $("cd").textContent = "Cerrado";
-  else { const d = Math.floor(ms/864e5), p = x => String(x).padStart(2,"0");
-    $("cd").textContent = (d ? d+"d " : "") + [Math.floor(ms/36e5)%24, Math.floor(ms/6e4)%60, Math.floor(ms/1e3)%60].map(p).join(":"); }
+  const ms = C.limite ? new Date(C.limite) - Date.now() : NaN;
+  if (isNaN(ms)) { expired = false; $("cd").textContent = "Sin fecha"; }
+  else {
+    expired = ms <= 0;
+    if (expired) $("cd").textContent = "Cerrado";
+    else { const d = Math.floor(ms/864e5), p = x => String(x).padStart(2,"0");
+      $("cd").textContent = (d ? d+"d " : "") + [Math.floor(ms/36e5)%24, Math.floor(ms/6e4)%60, Math.floor(ms/1e3)%60].map(p).join(":"); }
+  }
   lock();
 }
 setInterval(tick, 1000); tick();
@@ -324,7 +370,7 @@ $("tb").addEventListener("change", e => {
   if (!e.target.classList.contains("chk") || !isAdmin) return;
   const id = e.target.dataset.id, val = e.target.checked, o = S.duos[id] || {};
   const p = {["duos/"+id+"/pagado"]: val, ["lista/"+id+"/pagado"]: val};
-  if (val && !o.monto) { p["duos/"+id+"/monto"] = CUOTA; p["duos/"+id+"/metodo"] = o.metodo || "Efectivo"; }
+  if (val && !o.monto) { p["duos/"+id+"/monto"] = C.cuota; p["duos/"+id+"/metodo"] = o.metodo || "Efectivo"; }
   upd(p);
 });
 $("tb").addEventListener("click", e => {
@@ -375,9 +421,6 @@ $("btnSort").addEventListener("click", () => {
 $("btnBorrarLl").addEventListener("click", () => { if (confirm("¿Borrar las llaves?")) upd({llaves:null}); });
 
 /* ---------- Info y consulta ---------- */
-$("iFecha").textContent = INFO.fecha;
-$("iPremios").innerHTML = INFO.premios.map(x => `<li>${esc(x)}</li>`).join("");
-$("iReglas").innerHTML = INFO.reglas.map(x => `<li>${esc(x)}</li>`).join("");
 async function consultar(){
   const k = key($("cId").value); if (!k) return;
   const v = useFB ? await db.ref("ids/"+k).once("value").then(s => s.val(), () => null) : S.ids?.[k];
@@ -390,9 +433,30 @@ $("btnCons").addEventListener("click", consultar);
 $("wa").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,"").slice(0,10));
 $("e_wa").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,"").slice(0,10));
 const waF = $("waFloat");
-if (WA_GRUPO || WA_ORGANIZADOR) waF.href = WA_GRUPO || (waLink(WA_ORGANIZADOR) + "?text=" + encodeURIComponent(WA_MENSAJE));
-else waF.style.display = "none";
 $("cId").addEventListener("keydown", e => { if (e.key === "Enter") consultar(); });
+
+/* ---------- Configuración (admin) ---------- */
+const CFG_KEYS = ["torneo","inicio","limite","max","cuota","waOrg","waGrupo","waMsg"];
+function fillCfg(){
+  if (cfgDirty) return;
+  CFG_KEYS.forEach(k => $("c_"+k).value = C[k] ?? "");
+  $("c_premios").value = C.premios.join("\n"); $("c_reglas").value = C.reglas.join("\n");
+}
+const cfgFlash = (t, ok) => { $("cfgMsg").innerHTML = `<span class="${ok?"text-success":"text-danger"}">${t}</span>`; setTimeout(() => $("cfgMsg").innerHTML = "", 4000); };
+$("secCfg").addEventListener("input", () => cfgDirty = true);
+$("c_waOrg").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,"").slice(0,10));
+$("btnCfg").addEventListener("click", () => {
+  if (!isAdmin) return;
+  const v = i => $("c_"+i).value.trim(), wo = v("waOrg"), max = parseInt(v("max"), 10);
+  if (wo && !/^\d{10}$/.test(wo)) return cfgFlash("El WhatsApp debe tener exactamente 10 números.", false);
+  if (!(max >= 1)) return cfgFlash("Los cupos deben ser 1 o más.", false);
+  const n = {torneo: v("torneo") || DEF.torneo, inicio: v("inicio"), limite: v("limite"), max, cuota: Number(v("cuota")) || 0,
+    waOrg: wo, waGrupo: v("waGrupo"), waMsg: v("waMsg"), premios: lineas(v("premios")).join("\n"), reglas: lineas(v("reglas")).join("\n")};
+  upd({config: n}).then(() => { cfgDirty = false; cfgFlash("Configuración guardada.", true); }, () => cfgFlash("No se pudo guardar.", false));
+});
+$("btnCfgReset").addEventListener("click", () => {
+  if (isAdmin && confirm("¿Volver a los valores por defecto del archivo?")) upd({config: null}).then(() => { cfgDirty = false; fillCfg(); });
+});
 
 /* ---------- Login ---------- */
 const mLogin = new bootstrap.Modal($("mLogin")), mEdit = new bootstrap.Modal($("mEdit"));
@@ -410,6 +474,7 @@ async function login(){
 }
 $("btnLogin").addEventListener("click", login);
 $("lPass").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+render();
 </script>
 </body>
 </html>
