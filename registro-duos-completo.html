@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%20role%3D%22img%22%20aria-label%3D%22Logo%20D%C3%BAos%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%230e1116%22/%3E%3Cpolygon%20points%3D%2240%2C14%2055.6%2C23%2055.6%2C41%2040%2C50%2024.4%2C41%2024.4%2C23%22%20fill%3D%22none%22%20stroke%3D%22%23ffb020%22%20stroke-width%3D%224%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpolygon%20points%3D%2224%2C14%2039.6%2C23%2039.6%2C41%2024%2C50%208.4%2C41%208.4%2C23%22%20fill%3D%22none%22%20stroke%3D%22%232ee6a6%22%20stroke-width%3D%224%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%223.2%22%20fill%3D%22%23e8ecf2%22/%3E%3C/svg%3E">
+<title>Torneo de Dúos</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e1116;--panel:#171c24;--line:#2a323f;--txt:#e8ecf2;--mut:#8b95a5;--acc:#2ee6a6;--warn:#ffb020}
+body{background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif}
+h1,h2,h3,.brand,.stat{font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:.5px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.form-control,.form-select{background-color:#0e1116;border:1px solid var(--line);color:var(--txt)}
+.form-control:focus,.form-select:focus{background-color:#0e1116;color:var(--txt);border-color:var(--acc);box-shadow:0 0 0 .2rem rgba(46,230,166,.15)}
+.form-control::placeholder{color:#566072}
+label{color:var(--mut);font-size:.85rem}
+.btn-acc{background:var(--acc);color:#04251a;font-weight:700;border:0}
+.btn-acc:hover{background:#5df0bd;color:#04251a}
+.hero{padding:2.5rem 0 1.5rem}.hero h1{font-size:clamp(2.2rem,7vw,3.6rem);line-height:1}
+.table{--bs-table-bg:transparent;--bs-table-color:var(--txt);--bs-table-border-color:var(--line)}
+.table thead th{color:var(--mut);font-weight:600;font-size:.8rem}
+.badge-paid{background:rgba(46,230,166,.15);color:var(--acc)}.badge-pend{background:rgba(255,176,32,.15);color:var(--warn)}
+.form-check-input{width:1.4em;height:1.4em;background-color:#0e1116;border-color:var(--mut);cursor:pointer}
+.form-check-input:checked{background-color:var(--acc);border-color:var(--acc)}
+.stat{font-size:1.8rem}
+.link{color:var(--mut);font-size:.8rem;cursor:pointer;text-decoration:underline}
+.modal-content{background:var(--panel);border:1px solid var(--line);color:var(--txt)}.btn-close{filter:invert(1)}
+.ac{display:none}.ao{display:none}body.adm .ac{display:table-cell}body.adm .ao{display:block}body.adm .aof{display:flex}
+.match{border:1px solid var(--line);border-radius:8px;padding:.6rem .9rem}
+.wa-float{position:fixed;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.45);z-index:1030}.wa-float:hover{background:#3be67c}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="container" style="max-width:920px">
+
+<header class="hero">
+  <div class="d-flex align-items-center gap-2 mb-2"><span style="width:48px;height:48px;display:inline-block"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="40,14 55.6,23 55.6,41 40,50 24.4,41 24.4,23" fill="none" stroke="#ffb020" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="24,14 39.6,23 39.6,41 24,50 8.4,41 8.4,23" fill="none" stroke="#2ee6a6" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="32" cy="32" r="3.2" fill="#e8ecf2"/></svg></span><div class="brand text-secondary" id="tNombre"></div></div>
+  <h1>Registro de dúos</h1>
+  <div class="d-flex flex-wrap gap-3 mt-3">
+    <div class="panel px-3 py-2"><div class="small text-secondary">Cierra en</div><div class="stat" id="cd">--</div></div>
+    <div class="panel px-3 py-2 flex-grow-1">
+      <div class="d-flex justify-content-between small text-secondary"><span>Cupos</span><span id="cupTxt"></span></div>
+      <div class="progress mt-2" style="height:8px;background:#0e1116"><div id="cupBar" class="progress-bar" style="background:var(--acc)"></div></div>
+    </div>
+  </div>
+</header>
+
+<section class="panel p-3 p-md-4 mb-4">
+  <h2 class="h4">Premios y reglas</h2>
+  <div class="small text-secondary mb-3" id="iFecha"></div>
+  <div class="row g-3">
+    <div class="col-md-5"><h3 class="h6 text-secondary">Premios</h3><ul id="iPremios" class="mb-0 ps-3"></ul></div>
+    <div class="col-md-7"><h3 class="h6 text-secondary">Reglas</h3><ol id="iReglas" class="mb-0 ps-3"></ol></div>
+  </div>
+</section>
+
+<!-- FORMULARIO -->
+<section class="panel p-3 p-md-4 mb-4">
+  <div id="cerrado" class="alert alert-warning d-none">Las inscripciones están cerradas.</div>
+  <form id="f" autocomplete="off"><fieldset id="fs">
+    <label for="eq">Nombre del equipo</label>
+    <input id="eq" class="form-control mb-3" placeholder="Ej: Los Imparables" required maxlength="30">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <h3 class="h5">Jugador 1</h3>
+        <label for="n1">Nombre</label><input id="n1" class="form-control mb-2" required maxlength="40" placeholder="Nombre completo">
+        <label for="i1">ID del juego</label><input id="i1" class="form-control" required maxlength="30" placeholder="Ej: 5123456789">
+      </div>
+      <div class="col-md-6">
+        <h3 class="h5">Jugador 2</h3>
+        <label for="n2">Nombre</label><input id="n2" class="form-control mb-2" required maxlength="40" placeholder="Nombre completo">
+        <label for="i2">ID del juego</label><input id="i2" class="form-control" required maxlength="30" placeholder="Ej: 5987654321">
+      </div>
+      <div class="col-12">
+        <label for="wa">WhatsApp de contacto (opcional, 10 números)</label>
+        <input id="wa" type="tel" inputmode="numeric" class="form-control" maxlength="10" pattern="[0-9]{10}" title="10 números exactos" placeholder="0991234567">
+      </div>
+    </div>
+    <div id="msg" class="mt-3 small" role="status"></div>
+    <button id="btnReg" class="btn btn-acc w-100 mt-3 py-2" type="submit">Registrar dúo</button>
+  </fieldset></form>
+</section>
+
+<!-- CONSULTA -->
+<section class="panel p-3 p-md-4 mb-4">
+  <h2 class="h4">Consulta tu estado</h2>
+  <div class="input-group"><input id="cId" class="form-control" placeholder="Tu ID del juego"><button id="btnCons" class="btn btn-acc">Consultar</button></div>
+  <div id="cRes" class="mt-3" role="status"></div>
+</section>
+
+<!-- LISTA -->
+<section class="panel p-3 p-md-4 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="h4 mb-0">Dúos registrados</h2>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-light ao" id="btnCsv" style="display:none">Exportar CSV</button>
+      <span class="link" id="btnAdmin">Acceso admin</span>
+    </div>
+  </div>
+  <div class="row text-center g-2 mb-3 ao">
+    <div class="col-3"><div class="stat" id="sT">0</div><div class="small text-secondary">Dúos</div></div>
+    <div class="col-3"><div class="stat text-success" id="sP">0</div><div class="small text-secondary">Pagaron</div></div>
+    <div class="col-3"><div class="stat" style="color:var(--warn)" id="sN">0</div><div class="small text-secondary">Pendientes</div></div>
+    <div class="col-3"><div class="stat" id="sM">$0</div><div class="small text-secondary">Recaudado</div></div>
+  </div>
+  <div class="ao mb-3">
+    <input id="buscar" class="form-control mb-2" placeholder="Buscar por equipo, nombre, ID o nota...">
+    <div class="form-check form-switch"><input id="soloPend" class="form-check-input" type="checkbox" style="width:2.4em"><label for="soloPend" class="ms-1">Solo pendientes</label></div>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>#</th><th>Equipo</th><th class="text-center">Pago</th><th class="ac">Cobro</th><th class="ac"></th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <div id="vacio" class="text-secondary text-center py-4 d-none">Aún no hay dúos registrados.</div>
+</section>
+
+<!-- LLAVES -->
+<section class="panel p-3 p-md-4 mb-5" id="secLl">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="h4 mb-0">Llaves</h2>
+    <div class="gap-2 aof" style="display:none">
+      <button class="btn btn-sm btn-acc" id="btnSort">Sortear llaves</button>
+      <button class="btn btn-sm btn-outline-danger" id="btnBorrarLl">Borrar</button>
+    </div>
+  </div>
+  <div id="ll" class="d-grid gap-2"></div>
+  <div class="small text-secondary mt-2 ao">Solo entran al sorteo los dúos marcados como pagados.</div>
+</section>
+</div>
+
+<a id="waFloat" class="wa-float" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp" href="#">
+  <svg width="30" height="30" viewBox="0 0 16 16" fill="#fff" aria-hidden="true"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.06 3.966L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.01-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg>
+</a>
+
+<!-- LOGIN -->
+<div class="modal fade" id="mLogin" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content p-3">
+  <div class="d-flex justify-content-between mb-2"><h3 class="h5 mb-0">Acceso admin</h3><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <input id="lEmail" type="email" class="form-control mb-2" placeholder="Correo" style="display:none">
+  <input id="lPass" type="password" class="form-control mb-2" placeholder="Contraseña">
+  <div id="lErr" class="small text-danger mb-2"></div>
+  <button id="btnLogin" class="btn btn-acc w-100">Entrar</button>
+</div></div></div>
+
+<!-- EDITAR -->
+<div class="modal fade" id="mEdit" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content p-3">
+  <div class="d-flex justify-content-between mb-2"><h3 class="h5 mb-0">Editar dúo</h3><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="row g-2">
+    <div class="col-12"><label>Equipo</label><input id="e_eq" class="form-control"></div>
+    <div class="col-6"><label>Jugador 1</label><input id="e_n1" class="form-control"></div>
+    <div class="col-6"><label>ID 1</label><input id="e_i1" class="form-control"></div>
+    <div class="col-6"><label>Jugador 2</label><input id="e_n2" class="form-control"></div>
+    <div class="col-6"><label>ID 2</label><input id="e_i2" class="form-control"></div>
+    <div class="col-12"><label>WhatsApp</label><input id="e_wa" inputmode="numeric" maxlength="10" class="form-control"></div>
+    <div class="col-6"><label>Monto ($)</label><input id="e_monto" type="number" min="0" step="0.5" class="form-control"></div>
+    <div class="col-6"><label>Método</label><select id="e_met" class="form-select"><option>Efectivo</option><option>Transferencia</option><option>Otro</option></select></div>
+    <div class="col-12 form-check ms-2"><input id="e_pag" type="checkbox" class="form-check-input"> <label for="e_pag" class="ms-1">Pagado</label></div>
+    <div class="col-12"><label for="e_nota">Nota privada</label><textarea id="e_nota" class="form-control" rows="2" maxlength="200"></textarea></div>
+  </div>
+  <button id="btnSave" class="btn btn-acc w-100 mt-3">Guardar cambios</button>
+</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.js"></script>
+<script>
+/* ===================== CONFIGURACIÓN ===================== */
+const TORNEO = "Torneo de Dúos";
+const MAX_DUOS = 32;                    // cupos
+const FECHA_LIMITE = "2026-12-31T23:59";// cierre de inscripciones
+const CUOTA = 5;                        // monto por defecto al marcar pagado ($)
+const PAIS = "593";                     // prefijo para WhatsApp (Ecuador)
+const WA_ORGANIZADOR = "0991234567";  // tu WhatsApp (10 números)
+const WA_GRUPO = "";                 // link del grupo (https://chat.whatsapp.com/...). Si lo llenas, tiene prioridad
+const WA_MENSAJE = "Hola, tengo una consulta sobre el torneo de dúos.";
+const INFO = {
+  fecha: "Sábado 2 de enero · 8:00 pm · Modo dúos",
+  premios: ["1er lugar: $50", "2do lugar: $20", "3er lugar: reconocimiento"],
+  reglas: ["Dúos de exactamente 2 jugadores.", "El pago se confirma antes del torneo.", "Ambos jugadores deben estar conectados a la hora indicada.", "Prohibido usar hacks o cuentas ajenas.", "La decisión del organizador es final."]
+};
+const ADMIN_PASSWORD = "cambia-esta-clave"; // solo se usa SIN Firebase
+
+// Config de Firebase (Realtime Database + Authentication correo/contraseña).
+// Vacío = modo local (localStorage, solo para pruebas en un navegador).
+const firebaseConfig = { apiKey:"", authDomain:"", databaseURL:"", projectId:"", appId:"" };
+
+/* REGLAS de Realtime Database (pégalas en Firebase > Realtime Database > Reglas):
+{
+ "rules":{
+  ".read":false,".write":false,
+  "ids":{"$k":{".read":true,".write":"auth!=null || !data.exists()"}},
+  "duos":{".read":"auth!=null","$id":{".write":"auth!=null || (!data.exists() && newData.child('pagado').val()===false)"}},
+  "lista":{".read":true,"$id":{".write":"auth!=null || (!data.exists() && newData.child('pagado').val()===false)"}},
+  "llaves":{".read":true,".write":"auth!=null"}
+ }
+}
+Crea tu usuario admin en Firebase > Authentication > Users (correo + contraseña). */
+/* ========================================================= */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const key = s => String(s).trim().toLowerCase().replace(/[.#$\[\]\/\s]/g, "_");
+const mask = s => { s = String(s ?? ""); return s.length <= 4 ? "••••" : "•".repeat(s.length - 4) + s.slice(-4); };
+const useFB = !!firebaseConfig.databaseURL;
+let S = {duos:{}, lista:{}, llaves:null, ids:{}}, isAdmin = false, db, auth, expired = false, closed = false, editId = null;
+
+$("tNombre").textContent = TORNEO.toUpperCase();
+
+/* ---------- Datos ---------- */
+function applyLocal(p){
+  for (const [path, v] of Object.entries(p)) {
+    const k = path.split("/"); let o = S;
+    for (let i = 0; i < k.length - 1; i++) o = (o[k[i]] ??= {});
+    v === null ? delete o[k.at(-1)] : o[k.at(-1)] = v;
+  }
+  try { localStorage.setItem("torneo", JSON.stringify(S)); } catch {}
+  render();
+}
+const upd = p => useFB ? db.ref().update(p) : Promise.resolve(applyLocal(p));
+
+if (useFB) {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database(); auth = firebase.auth();
+  db.ref("lista").on("value", s => { S.lista = s.val() || {}; render(); });
+  db.ref("llaves").on("value", s => { S.llaves = s.val(); render(); });
+  auth.onAuthStateChanged(u => {
+    isAdmin = !!u;
+    if (u) db.ref("duos").on("value", s => { S.duos = s.val() || {}; render(); }, () => {});
+    else { db.ref("duos").off(); S.duos = {}; }
+    render();
+  });
+} else {
+  try { S = Object.assign(S, JSON.parse(localStorage.getItem("torneo") || "{}")); } catch {}
+  isAdmin = sessionStorage.getItem("admin") === "1";
+  render();
+}
+
+/* ---------- Helpers ---------- */
+const rows = () => Object.entries(S.lista).sort((a,b) => (a[1].ts||0) - (b[1].ts||0))
+  .map(([id,l],i) => ({id, n:i+1, ...l, ...(isAdmin ? S.duos[id] : {})}));
+const waLink = w => { let d = String(w||"").replace(/\D/g,""); if (d.startsWith("0")) d = PAIS + d.slice(1); return "https://wa.me/" + d; };
+const flash = (t, ok) => { $("msg").innerHTML = `<span class="${ok?"text-success":"text-danger"}">${t}</span>`; setTimeout(() => $("msg").innerHTML = "", 5000); };
+
+/* ---------- Render ---------- */
+function render(){
+  document.body.classList.toggle("adm", isAdmin);
+  const all = rows(), q = $("buscar").value.toLowerCase().trim();
+  const list = all.filter(r => (!$("soloPend").checked || !r.pagado) && (!q || [r.eq,r.n1,r.n2,r.i1,r.i2,r.nota].join(" ").toLowerCase().includes(q)));
+  const paid = all.filter(r => r.pagado);
+  $("sT").textContent = all.length; $("sP").textContent = paid.length; $("sN").textContent = all.length - paid.length;
+  $("sM").textContent = "$" + paid.reduce((a,r) => a + (Number(r.monto)||0), 0);
+  $("vacio").classList.toggle("d-none", all.length > 0);
+  $("cupTxt").textContent = `${all.length} / ${MAX_DUOS}`;
+  $("cupBar").style.width = Math.min(100, all.length / MAX_DUOS * 100) + "%";
+  lock();
+
+  $("tb").innerHTML = list.map(r => `<tr>
+    <td class="text-secondary">${r.n}</td>
+    <td><b>${esc(r.eq)}</b><div class="small text-secondary">${esc(r.n1)} y ${esc(r.n2)}</div>
+      <div class="small text-secondary">${isAdmin ? esc(r.i1)+" · "+esc(r.i2) : ""}</div>
+      ${isAdmin && r.nota ? `<div class="small" style="color:var(--warn)">${esc(r.nota)}</div>` : ""}</td>
+    <td class="text-center">${isAdmin
+      ? `<input type="checkbox" class="form-check-input chk" data-id="${r.id}" ${r.pagado?"checked":""} aria-label="Pagado">`
+      : `<span class="badge ${r.pagado?"badge-paid":"badge-pend"}">${r.pagado?"Pagado":"Pendiente"}</span>`}</td>
+    <td class="ac small">${r.monto ? "$"+esc(r.monto) : "-"}<div class="text-secondary">${esc(r.metodo||"")}</div></td>
+    <td class="ac text-end text-nowrap">
+      ${r.wa ? `<a class="btn btn-sm btn-outline-success" target="_blank" rel="noopener" href="${waLink(r.wa)}">WA</a>` : ""}
+      <button class="btn btn-sm btn-outline-light" data-act="edit" data-id="${r.id}">Editar</button>
+      <button class="btn btn-sm btn-outline-danger" data-act="del" data-id="${r.id}">✕</button></td>
+  </tr>`).join("");
+  $("btnAdmin").textContent = isAdmin ? "Cerrar sesión admin" : "Acceso admin";
+
+  const L = S.llaves;
+  $("secLl").style.display = (L || isAdmin) ? "" : "none";
+  $("ll").innerHTML = L ? (L.p || []).map((m,i) => `<div class="match d-flex justify-content-between">
+    <span class="text-secondary">Partida ${i+1}</span><span>${esc(m.a)} ${m.b ? `<span class="text-secondary mx-1">vs</span> ${esc(m.b)}` : `<span class="text-secondary">pasa directo</span>`}</span></div>`).join("")
+    : `<div class="text-secondary">Aún no se sortean las llaves.</div>`;
+}
+
+function lock(){
+  closed = expired || Object.keys(S.lista).length >= MAX_DUOS;
+  $("fs").disabled = closed;
+  $("cerrado").classList.toggle("d-none", !closed);
+}
+function tick(){
+  const ms = new Date(FECHA_LIMITE) - Date.now(); expired = ms <= 0;
+  if (expired) $("cd").textContent = "Cerrado";
+  else { const d = Math.floor(ms/864e5), p = x => String(x).padStart(2,"0");
+    $("cd").textContent = (d ? d+"d " : "") + [Math.floor(ms/36e5)%24, Math.floor(ms/6e4)%60, Math.floor(ms/1e3)%60].map(p).join(":"); }
+  lock();
+}
+setInterval(tick, 1000); tick();
+
+/* ---------- Registro ---------- */
+$("f").addEventListener("submit", async e => {
+  e.preventDefault(); if (closed) return;
+  const v = i => $(i).value.trim();
+  const d = {eq:v("eq"), n1:v("n1"), i1:v("i1"), n2:v("n2"), i2:v("i2"), wa:v("wa")};
+  const k1 = key(d.i1), k2 = key(d.i2);
+  if (d.wa && !/^\d{10}$/.test(d.wa)) return flash("El WhatsApp debe tener exactamente 10 números.");
+  if (k1 === k2) return flash("Los dos ID no pueden ser iguales.");
+  if (!useFB && (S.ids?.[k1] || S.ids?.[k2])) return flash("Uno de los ID ya está registrado.");
+  $("btnReg").disabled = true;
+  const id = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts = Date.now();
+  const ok = await upd({
+    ["ids/"+k1]: id, ["ids/"+k2]: id,
+    ["duos/"+id]: {...d, pagado:false, ts},
+    ["lista/"+id]: {eq:d.eq, n1:d.n1, n2:d.n2, pagado:false, ts}
+  }).then(() => true, () => false);
+  $("btnReg").disabled = false;
+  if (ok) { e.target.reset(); flash("Dúo registrado correctamente.", true); }
+  else flash("Uno de los ID ya está registrado o hubo un error de conexión.");
+});
+
+/* ---------- Admin ---------- */
+$("tb").addEventListener("change", e => {
+  if (!e.target.classList.contains("chk") || !isAdmin) return;
+  const id = e.target.dataset.id, val = e.target.checked, o = S.duos[id] || {};
+  const p = {["duos/"+id+"/pagado"]: val, ["lista/"+id+"/pagado"]: val};
+  if (val && !o.monto) { p["duos/"+id+"/monto"] = CUOTA; p["duos/"+id+"/metodo"] = o.metodo || "Efectivo"; }
+  upd(p);
+});
+$("tb").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || !isAdmin) return;
+  const id = b.dataset.id, o = S.duos[id]; if (!o) return;
+  if (b.dataset.act === "del") {
+    if (confirm("¿Eliminar este dúo? Sus ID quedarán libres.")) upd({["duos/"+id]:null, ["lista/"+id]:null, ["ids/"+key(o.i1)]:null, ["ids/"+key(o.i2)]:null});
+  } else if (b.dataset.act === "edit") {
+    editId = id;
+    ["eq","n1","i1","n2","i2","wa","monto","nota"].forEach(k => $("e_"+k).value = o[k] ?? "");
+    $("e_met").value = o.metodo || "Efectivo"; $("e_pag").checked = !!o.pagado;
+    mEdit.show();
+  }
+});
+$("btnSave").addEventListener("click", () => {
+  const id = editId, o = S.duos[id], v = i => $(i).value.trim();
+  const n = {...o, eq:v("e_eq"), n1:v("e_n1"), i1:v("e_i1"), n2:v("e_n2"), i2:v("e_i2"), wa:v("e_wa"), monto:v("e_monto"), nota:v("e_nota"), metodo:$("e_met").value, pagado:$("e_pag").checked};
+  const k1 = key(n.i1), k2 = key(n.i2);
+  const otros = new Set(Object.entries(S.duos).filter(([x]) => x !== id).flatMap(([,d]) => [key(d.i1), key(d.i2)]));
+  if (k1 === k2 || otros.has(k1) || otros.has(k2)) return alert("ID repetido.");
+  if (n.wa && !/^\d{10}$/.test(n.wa)) return alert("El WhatsApp debe tener 10 números.");
+  const p = {["duos/"+id]:n, ["lista/"+id]:{eq:n.eq, n1:n.n1, n2:n.n2, pagado:n.pagado, ts:S.lista[id].ts}};
+  if (k1 !== key(o.i1)) { p["ids/"+key(o.i1)] = null; p["ids/"+k1] = id; }
+  if (k2 !== key(o.i2)) { p["ids/"+key(o.i2)] = null; p["ids/"+k2] = id; }
+  upd(p).then(() => mEdit.hide());
+});
+$("buscar").addEventListener("input", render);
+$("soloPend").addEventListener("change", render);
+
+$("btnCsv").addEventListener("click", () => {
+  const q = s => '"' + String(s ?? "").replace(/"/g,'""') + '"';
+  const L = [["#","Equipo","Jugador 1","ID 1","Jugador 2","ID 2","WhatsApp","Pagado","Monto","Método","Fecha","Nota"],
+    ...rows().map(r => [r.n,r.eq,r.n1,r.i1,r.n2,r.i2,r.wa,r.pagado?"Sí":"No",r.monto,r.metodo,new Date(r.ts).toLocaleString(),r.nota])];
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + L.map(r => r.map(q).join(",")).join("\n")], {type:"text/csv"}));
+  a.download = "duos.csv"; a.click();
+});
+
+/* ---------- Sorteo ---------- */
+$("btnSort").addEventListener("click", () => {
+  const t = rows().filter(r => r.pagado).map(r => r.eq || (r.n1 + " y " + r.n2));
+  if (t.length < 2) return alert("Se necesitan al menos 2 dúos pagados.");
+  if (S.llaves && !confirm("Ya hay llaves. ¿Volver a sortear?")) return;
+  for (let i = t.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [t[i], t[j]] = [t[j], t[i]]; }
+  const p = []; for (let i = 0; i < t.length; i += 2) p.push({a:t[i], b:t[i+1] || ""});
+  upd({llaves:{ts:Date.now(), p}});
+});
+$("btnBorrarLl").addEventListener("click", () => { if (confirm("¿Borrar las llaves?")) upd({llaves:null}); });
+
+/* ---------- Info y consulta ---------- */
+$("iFecha").textContent = INFO.fecha;
+$("iPremios").innerHTML = INFO.premios.map(x => `<li>${esc(x)}</li>`).join("");
+$("iReglas").innerHTML = INFO.reglas.map(x => `<li>${esc(x)}</li>`).join("");
+async function consultar(){
+  const k = key($("cId").value); if (!k) return;
+  const v = useFB ? await db.ref("ids/"+k).once("value").then(s => s.val(), () => null) : S.ids?.[k];
+  const l = typeof v === "string" ? S.lista[v] : null;
+  $("cRes").innerHTML = !v ? `<span class="text-danger">Ese ID no está registrado.</span>`
+    : !l ? `<span class="text-success">ID registrado.</span>`
+    : `<b>${esc(l.eq)}</b> <span class="badge ${l.pagado?"badge-paid":"badge-pend"} ms-1">${l.pagado?"Pagado":"Pendiente de pago"}</span>`;
+}
+$("btnCons").addEventListener("click", consultar);
+$("wa").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,"").slice(0,10));
+$("e_wa").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,"").slice(0,10));
+const waF = $("waFloat");
+if (WA_GRUPO || WA_ORGANIZADOR) waF.href = WA_GRUPO || (waLink(WA_ORGANIZADOR) + "?text=" + encodeURIComponent(WA_MENSAJE));
+else waF.style.display = "none";
+$("cId").addEventListener("keydown", e => { if (e.key === "Enter") consultar(); });
+
+/* ---------- Login ---------- */
+const mLogin = new bootstrap.Modal($("mLogin")), mEdit = new bootstrap.Modal($("mEdit"));
+$("lEmail").style.display = useFB ? "" : "none";
+$("btnAdmin").addEventListener("click", () => {
+  if (isAdmin) { if (useFB) auth.signOut(); else { isAdmin = false; sessionStorage.removeItem("admin"); render(); } }
+  else { $("lPass").value = ""; $("lErr").textContent = ""; mLogin.show(); }
+});
+async function login(){
+  if (useFB) {
+    try { await auth.signInWithEmailAndPassword($("lEmail").value.trim(), $("lPass").value); mLogin.hide(); }
+    catch { $("lErr").textContent = "Correo o contraseña incorrectos."; }
+  } else if ($("lPass").value === ADMIN_PASSWORD) { isAdmin = true; sessionStorage.setItem("admin","1"); mLogin.hide(); render(); }
+  else $("lErr").textContent = "Contraseña incorrecta.";
+}
+$("btnLogin").addEventListener("click", login);
+$("lPass").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+</script>
+</body>
+</html>
